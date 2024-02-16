@@ -1,0 +1,46 @@
+version: "3.3"
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: docker/Nginx.Dockerfile
+    ports:
+      -    80:80
+    links:
+      -   fpm
+    volumes:
+      - ./:/var/www/
+  fpm:
+    build:
+      context: .
+      dockerfile: docker/Fpm.Dockerfile
+    volumes:
+      -   ./:/var/www/ci_cd_test
+      -   ./nginx/conf.d:/etc/nginx/conf.d
+    links:
+      - mysql
+  mysql:
+    image: mysql:8.0
+    ports:
+      -   3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DADABASE=laravel
+    volumes:
+      - mysql_data:/var/lib/mysql
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: php-phpmyadmin
+    restart: unless-stopped
+    environment:
+      - PMA_ARBITRARY=1
+      - UPLOAD_LIMIT=1024M
+      - MEMORY_LIMIT=1024M
+      - MAX_EXECUTION_TIME=300
+    ports:
+      - 8080:80
+    depends_on:
+      - mysql
+volumes:
+  mysql_data:
